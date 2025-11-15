@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'M2_HOME'
+    }
+
+    stages {
+
+        stage('Exemple 1 - Hello World') {
+            steps {
+                echo "Hello world !"
+            }
+        }
+
+        stage('Exemple 2 - Git Clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/wafachabbi/projetDevOps.git'
+            }
+        }
+
+        stage('Exemple 3 - Maven Build') {
+            steps {
+                sh 'mvn -version'
+            }
+        }
+    }
+}
