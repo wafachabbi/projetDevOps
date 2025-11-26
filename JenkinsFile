@@ -13,16 +13,34 @@ pipeline {
             }
         }
 
-        stage('Exemple 2 - Git Clone') {
+        stage('Git Clone') {
             steps {
                 git branch: 'main', url: 'https://github.com/wafachabbi/projetDevOps.git'
             }
         }
 
-        stage('Exemple 3 - Maven Build') {
+        stage('Maven Build') {
             steps {
                 sh 'mvn -version'
             }
         }
+        stage('Clean') {
+                    steps {
+                        sh 'mvn clean'
+                    }
+                }
+                stage('Compile') {
+                            steps {
+                                sh 'mvn compile'
+                            }
+                        }
+        stage('Sonar Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
     }
 }
