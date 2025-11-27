@@ -34,13 +34,14 @@ pipeline {
                                 sh 'mvn compile'
                             }
                         }
-        stage('Sonar Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-        }
+                        stage('Sonar Analysis') {
+                            environment {
+                                SONAR_TOKEN = credentials('sonar-token')
+                            }
+                            steps {
+                                sh 'mvn sonar:sonar'
+                            }
+                        }
 
     }
 }
