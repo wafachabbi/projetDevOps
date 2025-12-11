@@ -41,7 +41,7 @@ pipeline {
             steps {
                 sh """
                     echo "⚙️ Building Docker image..."
-                    docker build -t wafachabbi/student-management:latest .
+                    docker build -t wafachabbi/student-management:latest -f DockerFile .
                 """
             }
         }
