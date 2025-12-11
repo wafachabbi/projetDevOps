@@ -50,23 +50,20 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'docker-hub-credentials',
-                        usernameVariable: 'DOCKER_USERNAME',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )]) {
+                   withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials',
+                                                    usernameVariable: 'DOCKER_USERNAME',
+                                                    passwordVariable: 'DOCKER_PASSWORD')]) {
+                       sh """
+                           echo "🔐 Logging in to DockerHub..."
+                           echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin
 
-                        sh """
-                            echo "🔐 Logging in to DockerHub..."
-                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                           echo "📤 Pushing image..."
+                           docker push wafachabbi/student-management:latest
 
-                            echo "📤 Pushing image..."
-                            docker push wafachabbi/student-management:latest
-
-                            echo "🚪 Logging out..."
-                            docker logout
-                        """
-                    }
+                           echo "🚪 Logging out..."
+                           docker logout
+                       """
+                   }
                 }
             }
         }
