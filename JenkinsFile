@@ -7,41 +7,61 @@ pipeline {
 
     stages {
 
-        stage('Exemple 1 - Hello World') {
-            steps {
-                echo "Hello world !"
-            }
-        }
-
         stage('Git Clone') {
             steps {
                 git branch: 'main', url: 'https://github.com/wafachabbi/projetDevOps.git'
             }
         }
 
-        stage('Maven Build') {
+        stage('Maven Version') {
             steps {
                 sh 'mvn -version'
             }
         }
+
         stage('Clean') {
-                    steps {
-                        sh 'mvn clean'
+            steps {
+                sh 'mvn clean'
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+
+        stage('Sonar Analysis') {
+            environment {
+                SONAR_TOKEN = credentials('sonar-token')
+            }
+            steps {
+                sh """
+                    mvn sonar:sonar \
+                        -Dsonar.projectKey=student-management \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=$SONAR_TOKEN
+                """
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t wafachabbi/student-management:latest -f Dockerfile .'
+            }
+        }
+
+        stage('Push Docker Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials',
+                                                      usernameVariable: 'DOCKER_USERNAME',
+                                                      passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        sh 'docker push wafachabbi/student-management:latest'
                     }
                 }
-                stage('Compile') {
-                            steps {
-                                sh 'mvn compile'
-                            }
-                        }
-                        stage('Sonar Analysis') {
-                            environment {
-                                SONAR_TOKEN = credentials('sonar-token')
-                            }
-                            steps {
-                                sh 'mvn sonar:sonar'
-                            }
-                        }
-
+            }
+        }
     }
 }
