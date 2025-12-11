@@ -7,30 +7,21 @@ pipeline {
 
     stages {
 
+        /* ====== 1. GIT CLONE ====== */
         stage('Git Clone') {
             steps {
                 git branch: 'main', url: 'https://github.com/wafachabbi/projetDevOps.git'
             }
         }
 
-        stage('Maven Version') {
+        /* ====== 2. MAVEN BUILD ====== */
+        stage('Maven Clean & Compile') {
             steps {
-                sh 'mvn -version'
+                sh 'mvn clean compile'
             }
         }
 
-        stage('Clean') {
-            steps {
-                sh 'mvn clean'
-            }
-        }
-
-        stage('Compile') {
-            steps {
-                sh 'mvn compile'
-            }
-        }
-
+        /* ====== 3. SONAR ANALYSIS ====== */
         stage('Sonar Analysis') {
             environment {
                 SONAR_TOKEN = credentials('sonar-token')
@@ -45,20 +36,36 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        /* ====== 4. DOCKER BUILD ====== */
+        stage('Docker Build') {
             steps {
-                sh 'docker build -t wafachabbi/student-management:latest -f Dockerfile .'
+                sh """
+                    echo "⚙️ Building Docker image..."
+                    docker build -t wafachabbi/student-management:latest .
+                """
             }
         }
 
-        stage('Push Docker Hub') {
+        /* ====== 5. DOCKER PUSH ====== */
+        stage('Docker Push') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials',
-                                                      usernameVariable: 'DOCKER_USERNAME',
-                                                      passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
-                        sh 'docker push wafachabbi/student-management:latest'
+                    withCredentials([usernamePassword(
+                        credentialsId: 'docker-hub-credentials',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )]) {
+
+                        sh """
+                            echo "🔐 Logging in to DockerHub..."
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+
+                            echo "📤 Pushing image..."
+                            docker push wafachabbi/student-management:latest
+
+                            echo "🚪 Logging out..."
+                            docker logout
+                        """
                     }
                 }
             }
