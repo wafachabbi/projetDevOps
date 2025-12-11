@@ -15,11 +15,12 @@ pipeline {
         }
 
         /* ====== 2. MAVEN BUILD ====== */
-        stage('Maven Clean & Compile') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
+        stage('Maven Build') {
+                   steps {
+                       echo "⚙️ Building Maven project..."
+                       sh 'mvn clean package'
+                   }
+               }
 
         /* ====== 3. SONAR ANALYSIS ====== */
         stage('Sonar Analysis') {
@@ -68,4 +69,12 @@ pipeline {
             }
         }
     }
+    post {
+            success {
+                echo "✅ Pipeline finished successfully!"
+            }
+            failure {
+                echo "❌ Pipeline failed. Check the logs!"
+            }
+        }
 }
