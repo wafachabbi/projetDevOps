@@ -1,0 +1,27 @@
+# Déploiement Spring Boot
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-management-deployment
+spec:
+  selector:
+    matchLabels:
+      app: student-management
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: student-management
+    spec:
+      containers:
+        - name: student-management
+          image: wafachabbi/student-management:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql-service:3306/student_db
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: my-secret-pw
