@@ -1,9 +1,40 @@
+---
+# Persistent Volume (nécessaire si tu n'as pas de StorageClass dynamique)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+  namespace: student-management
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/mysql"   # Chemin sur le noeud (minikube/vagrant)
+---
+# Persistent Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: student-management
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: mysql-pv
+---
+# Déploiement MySQL
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql-deployment
   namespace: student-management
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
@@ -14,10 +45,12 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: mysql:8
+          image: mysql:8.0
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: root
+            - name: MYSQL_DATABASE
+              value: student_db
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -28,6 +61,7 @@ spec:
           persistentVolumeClaim:
             claimName: mysql-pvc
 ---
+# Service MySQL
 apiVersion: v1
 kind: Service
 metadata:
