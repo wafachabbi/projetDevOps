@@ -19,7 +19,7 @@ pipeline {
         stage('Maven Build') {
             steps {
                 echo "⚙️ Building Maven project..."
-                sh 'mvn clean package'
+                sh 'mvn clean install'
             }
         }
 
@@ -75,14 +75,14 @@ pipeline {
             emailext(
                 subject: "✅ Build SUCCESS : ${currentBuild.fullDisplayName}",
                 body: "Le pipeline a réussi.\n\nDétails : ${env.BUILD_URL}",
-                to: 'wafachabbi@gmail.com'
+                to: 'wafachabbi21@gmail.com'
             )
         }
         failure {
             emailext(
                 subject: "❌ Build FAILED : ${currentBuild.fullDisplayName}",
                 body: "Le pipeline a échoué.\n\nDétails : ${env.BUILD_URL}",
-                to: 'wafachabbi@gmail.com'
+                to: 'wafachabbi21@gmail.com'
             )
         }
     }
