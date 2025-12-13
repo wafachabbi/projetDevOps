@@ -7,7 +7,6 @@ pipeline {
 
     stages {
 
-        /* ====== 1. GIT CLONE ====== */
         stage('Git Clone') {
             steps {
                 git branch: 'main',
@@ -15,7 +14,6 @@ pipeline {
             }
         }
 
-        /* ====== 2. MAVEN BUILD ====== */
         stage('Maven Build') {
             steps {
                 echo "⚙️ Building Maven project..."
@@ -23,7 +21,6 @@ pipeline {
             }
         }
 
-        /* ====== 3. DOCKER BUILD ====== */
         stage('Docker Build') {
             steps {
                 echo "🐳 Building Docker image..."
@@ -31,7 +28,6 @@ pipeline {
             }
         }
 
-        /* ====== 4. DOCKER PUSH ====== */
         stage('Docker Push') {
             steps {
                 script {
@@ -52,7 +48,24 @@ pipeline {
             }
         }
 
-        /* ====== 5. SONARQUBE ANALYSIS (À LA FIN) ====== */
+        stage('Kubernetes Deploy') {
+            steps {
+                echo "☸️ Deploying MySQL & Spring Boot to Kubernetes..."
+
+                // Crée le namespace si nécessaire
+                sh 'kubectl create namespace student-management || true'
+
+                // Déploiement MySQL
+                sh 'kubectl apply -f mysql-deployment.yaml -n student-management'
+
+                // Déploiement Spring Boot
+                sh 'kubectl apply -f spring-boot-deployment.yaml -n student-management'
+
+                // Vérification des pods
+                sh 'kubectl get pods -n student-management'
+            }
+        }
+
         stage('Sonar Analysis') {
             environment {
                 SONAR_TOKEN = credentials('sonar-token')
@@ -69,7 +82,6 @@ pipeline {
         }
     }
 
-    /* ====== POST ACTIONS ====== */
     post {
         success {
             emailext(
