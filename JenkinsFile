@@ -10,24 +10,55 @@ pipeline {
         /* ====== 1. GIT CLONE ====== */
         stage('Git Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/wafachabbi/projetDevOps.git'
+                git branch: 'main',
+                    url: 'https://github.com/wafachabbi/projetDevOps.git'
             }
         }
 
         /* ====== 2. MAVEN BUILD ====== */
         stage('Maven Build') {
-                   steps {
-                       echo "⚙️ Building Maven project..."
-                       sh 'mvn clean package'
-                   }
-               }
+            steps {
+                echo "⚙️ Building Maven project..."
+                sh 'mvn clean package'
+            }
+        }
 
-        /* ====== 3. SONAR ANALYSIS ====== */
+        /* ====== 3. DOCKER BUILD ====== */
+        stage('Docker Build') {
+            steps {
+                echo "🐳 Building Docker image..."
+                sh 'docker build -t wafachabbi/student-management:latest -f DockerFile .'
+            }
+        }
+
+        /* ====== 4. DOCKER PUSH ====== */
+        stage('Docker Push') {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'docker-hub-credentials',
+                            usernameVariable: 'DOCKER_USERNAME',
+                            passwordVariable: 'DOCKER_PASSWORD'
+                        )
+                    ]) {
+                        sh """
+                            echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin
+                            docker push wafachabbi/student-management:latest
+                            docker logout
+                        """
+                    }
+                }
+            }
+        }
+
+        /* ====== 5. SONARQUBE ANALYSIS (À LA FIN) ====== */
         stage('Sonar Analysis') {
             environment {
                 SONAR_TOKEN = credentials('sonar-token')
             }
             steps {
+                echo "🔍 Running SonarQube analysis..."
                 sh """
                     mvn sonar:sonar \
                         -Dsonar.projectKey=student-management \
@@ -36,40 +67,23 @@ pipeline {
                 """
             }
         }
+    }
 
-        /* ====== 4. DOCKER BUILD ====== */
-        stage('Docker Build') {
-            steps {
-                sh """
-                    echo "⚙️ Building Docker image..."
-                    docker build -t wafachabbi/student-management:latest -f DockerFile .
-                """
-            }
+    /* ====== POST ACTIONS ====== */
+    post {
+        success {
+            emailext(
+                subject: "✅ Build SUCCESS : ${currentBuild.fullDisplayName}",
+                body: "Le pipeline a réussi.\n\nDétails : ${env.BUILD_URL}",
+                to: 'wafachabbi@gmail.com'
+            )
         }
-
-        /* ====== 5. DOCKER PUSH ====== */
-        stage('Docker Push') {
-            steps {
-                script {
-                   withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials',
-                                                    usernameVariable: 'DOCKER_USERNAME',
-                                                    passwordVariable: 'DOCKER_PASSWORD')]) {
-                       sh """
-                           echo "🔐 Logging in to DockerHub..."
-                           echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin
-
-                           echo "📤 Pushing image..."
-                           docker push wafachabbi/student-management:latest
-
-                           echo "🚪 Logging out..."
-                           docker logout
-                       """
-                   }
-                }
-            }
+        failure {
+            emailext(
+                subject: "❌ Build FAILED : ${currentBuild.fullDisplayName}",
+                body: "Le pipeline a échoué.\n\nDétails : ${env.BUILD_URL}",
+                to: 'wafachabbi@gmail.com'
+            )
         }
-
-
-
     }
 }
